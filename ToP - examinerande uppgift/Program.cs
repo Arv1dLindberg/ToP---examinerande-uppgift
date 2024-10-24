@@ -22,11 +22,11 @@ namespace ToP___examinerande_uppgift
         static void Main()
         { 
             Console.CursorVisible = false;
-            char[,] city = CreateInnerCity();
+            char[,] city = InnerCity();
             CreateCityWalls(city);
             List<Person> people = AddPeople();
             AddToTillhörigheter(people);
-            Counters();
+            printCounters();
 
             // Loops the program until manually stopped by pressing the escape key
             while (true)
@@ -37,7 +37,7 @@ namespace ToP___examinerande_uppgift
                 CheckCollisions(people);
                 PeoplePosition(city, people);
                 CreateCityWalls(city);
-                Counters();
+                printCounters();
 
                 if (Console.KeyAvailable)
                 {
@@ -74,12 +74,12 @@ namespace ToP___examinerande_uppgift
 
 
         // Creates the space that the people will move around in
-        static char[,] CreateInnerCity()
+        static char[,] InnerCity()
         {
             char[,] city = new char[cityHeight, cityWidth];
 
-            for (int i = 0; i < cityHeight; i++)
-                for (int j = 0; j < cityWidth; j++)
+            for (int i = 1; i < cityHeight - 1; i++)
+                for (int j = 1; j < cityWidth - 1; j++)
                     city[i, j] = ' ';
             return city;
         }
@@ -92,7 +92,7 @@ namespace ToP___examinerande_uppgift
             people.AddRange(PlacePeople<Tjuv>(10));
             people.AddRange(PlacePeople<Polis>(15));
             people.AddRange(PlacePeople<Medborgare>(30));
-            return people;
+            return people;  
         }
 
 
@@ -111,10 +111,10 @@ namespace ToP___examinerande_uppgift
 
         /* Creates and places a specified amount of people within the city and randomly assigns them one of 7 directions
          * (left, right, diagonally left, diagonally right, up, down, and still */
-        static List<T> PlacePeople<T>(int count) where T : Person, new()
+        static List<T> PlacePeople<T>(int peopleCount) where T : Person, new()
         {
             List<T> people = new List<T>();
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < peopleCount; i++)
             {
                 int x = rndm.Next(1, cityWidth - 1);
                 int y = rndm.Next(1, cityHeight - 1);
@@ -181,7 +181,7 @@ namespace ToP___examinerande_uppgift
 
 
         //Counters for certain events
-        static void Counters()
+        static void printCounters()
         {
             Console.SetCursorPosition(0, cityHeight + 1);
             Console.WriteLine($"Antal rånade medborgare: {medborgareRobbed}");
@@ -247,7 +247,7 @@ namespace ToP___examinerande_uppgift
 
                 Console.WriteLine($"En tjuv stal {stolenSak.Name} från en medborgare!");
                 medborgareRobbed += 1;
-                Counters();
+                printCounters();
 
                 Thread.Sleep(2000);
             }
@@ -268,7 +268,7 @@ namespace ToP___examinerande_uppgift
 
                 Console.WriteLine($"En polis fångade en tjuv och beslagtog {stolenItemsString}!");
                 tjuvCaught += 1;
-                Counters();
+                printCounters();
 
                 Thread.Sleep(2500);
             }
