@@ -1,130 +1,80 @@
-﻿namespace ToP___examinerande_uppgift
+﻿using System.Runtime.Intrinsics.Arm;
+
+namespace ToP___examinerande_uppgift
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+
     internal class Program
     {
         // City Size
-        public const int cityWidth = 100;
-        public const int cityHeight = 25;
+        private const int cityWidth = 100;
+        private const int cityHeight = 25;
+
+        // Counters
+        private static int medborgareRobbed = 0;
+        private static int tjuvCaught = 0;
 
         private static Random rndm = new Random();
 
         static void Main()
-        {
-            char[,] city = CreateCity();
+        { 
+            Console.CursorVisible = false;
+            char[,] city = CreateInnerCity();
+            CreateCityWalls(city);
+            List<Person> people = AddPeople();
+            AddToTillhörigheter(people);
+            Counters();
 
-            List<Person> people = new List<Person>(); // Creates a list that holds elements of Person
-            people.AddRange(PlacePeople<Thief>(30));   // Generates a specified amount of Thieves
-            people.AddRange(PlacePeople<Police>(30));   // Generates a specified amount of Police
-            people.AddRange(PlacePeople<Citizen>(30)); // Generates a specified amount of Citizens
-
-            //Adds Nycklar, Mobiltelefon, Pengar, and Klocka to citizen's inventory
-            foreach (var citizen in people.OfType<Citizen>())
-            {
-                citizen.Saker.Add(new Sak("Nycklar"));
-                citizen.Saker.Add(new Sak("Mobiltelefon"));
-                citizen.Saker.Add(new Sak("Pengar"));
-                citizen.Saker.Add(new Sak("Klocka"));
-            }
-
-            // Repeats the program until manually stopped
+            // Loops the program until manually stopped by pressing the escape key
             while (true)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
                 ClearPosition(city, people);
                 MovePeople(people);
                 CheckCollisions(people);
                 PeoplePosition(city, people);
-                Console.Clear();
                 CreateCityWalls(city);
-            }
-        }
+                Counters();
 
-        // Checks if people run into each other
-        static void CheckCollisions(List<Person> people)
-        {
-            for (int i = 0; i < people.Count; i++)
-            {
-                for (int j = i + 1; j < people.Count; j++)
+                if (Console.KeyAvailable)
                 {
-                    // If two people are at the same coordinates
-                    if (people[i].X == people[j].X && people[i].Y == people[j].Y)
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Escape)
                     {
-                        CollisionOccurs(people[i], people[j]);
+                        Console.WriteLine("Program avslutades");
+                        break;
                     }
                 }
             }
         }
 
-        // Switch for what happens depending on what type of person's run into each other
-        static void CollisionOccurs(Person person1, Person person2)
-        {
-            switch (person1, person2)
-            {
-                case (Thief thief, Citizen citizen):
-                    Steal(thief, citizen);
-                    break;
 
-                case (Citizen citizen, Thief thief):
-                    Steal(thief, citizen);
-                    break;
-
-                case (Police police, Thief thief):
-                    Confiscate(police, thief);
-                    break;
-
-                case (Thief thief, Police police):
-                    Confiscate(police, thief);
-                    break;
-            }
-        }
-
-        // If a thief collides with a citizen
-        static void Steal(Thief thief, Citizen citizen)
-        {
-            if (citizen.Saker.Any())
-            {
-                // Pick a random item from the Citizen's belongings
-                Random random = new Random();
-                int randomIndex = random.Next(citizen.Saker.Count);
-                Sak stolenItem = citizen.Saker[randomIndex];
-
-                // Remove the item from the Citizen and add it to the Thief
-                citizen.Saker.RemoveAt(randomIndex);
-                thief.Saker.Add(stolenItem);
-
-                Console.WriteLine($"A thief stole {stolenItem.Name} from a citizen!");
-            }
-        }
-
-        // If a police collides with a thief
-        static void Confiscate(Police police, Thief thief)
-        {
-            if (thief.Saker.Any())
-            {
-                // Removes all items from the Thief's inventory and adds it to the Police's inventory
-                police.Saker.AddRange(thief.Saker);
-                thief.Saker.Clear();
-
-                Console.WriteLine($"A Police confiscated all items from a thief!");
-            }
-        }
-
-        // Creates the city boundaries
+        // Creates the city walls
         static void CreateCityWalls(char[,] city)
         {
+            Console.Clear();
+
             Console.WriteLine(new string('X', cityWidth));
-            for (int i = 0; i < cityHeight; i++)
+            for (int i = 1; i < cityHeight - 1; i++)
             {
-                Console.Write("X");
+                Console.Write('X');
+
                 for (int j = 1; j < cityWidth - 1; j++)
+                {
                     Console.Write(city[i, j]);
-                Console.WriteLine("X");
+                }
+
+                Console.WriteLine('X');
             }
             Console.WriteLine(new string('X', cityWidth));
         }
 
+
         // Creates the space that the people will move around in
-        static char[,] CreateCity()
+        static char[,] CreateInnerCity()
         {
             char[,] city = new char[cityHeight, cityWidth];
 
@@ -134,9 +84,33 @@
             return city;
         }
 
+
+        // Generates a specified amount of people
+        static List<Person> AddPeople()
+        {
+            List<Person> people = new List<Person>();
+            people.AddRange(PlacePeople<Tjuv>(10));
+            people.AddRange(PlacePeople<Polis>(15));
+            people.AddRange(PlacePeople<Medborgare>(30));
+            return people;
+        }
+
+
+        // Adds items to Tillhörigheter
+        static void AddToTillhörigheter(List<Person> people)
+        {
+            foreach (var medborgare in people.OfType<Medborgare>())
+            {
+                medborgare.Saker.Add(new Sak("Nycklar"));
+                medborgare.Saker.Add(new Sak("Mobiltelefon"));
+                medborgare.Saker.Add(new Sak("Pengar"));
+                medborgare.Saker.Add(new Sak("Klocka"));
+            }
+        }
+
+
         /* Creates and places a specified amount of people within the city and randomly assigns them one of 7 directions
-         * (left, right, diagonally left, diagonally right, up, down, and still
-         */
+         * (left, right, diagonally left, diagonally right, up, down, and still */
         static List<T> PlacePeople<T>(int count) where T : Person, new()
         {
             List<T> people = new List<T>();
@@ -152,18 +126,17 @@
                     Xdirection = rndm.Next(-1, 2),
                     Ydirection = rndm.Next(-1, 2)
                 };
-
                 people.Add(person);
             }
             return people;
         }
+
 
         // Gives the person's their direction and moves them
         static void MovePeople(List<Person> people)
         {
             foreach (var person in people)
             {
-                // Updates X position
                 person.X += person.Xdirection;
 
                 // If a person moves outside the X walls they will come back on the opposite X-axis
@@ -176,20 +149,20 @@
                     person.X = 1;
                 }
 
-                // Updates Y position
                 person.Y += person.Ydirection;
 
                 // If a person moves outside the Y walls they will come back on the opposite Y-axis
-                if (person.Y < 0)
+                if (person.Y <= 0)
                 {
                     person.Y = Program.cityHeight - 1;
                 }
                 else if (person.Y >= Program.cityHeight)
                 {
-                    person.Y = 0;
+                    person.Y = 1;
                 }
             }
         }
+
 
         // Clears the person's previous position
         static void ClearPosition(char[,] city, List<Person> people)
@@ -198,19 +171,115 @@
                 city[person.Y, person.X] = ' ';
         }
 
+
         // Updates person's position in the city
         static void PeoplePosition(char[,] city, List<Person> people)
         {
             foreach (var person in people)
                 city[person.Y, person.X] = person.Symbol;
         }
-        
-        /* List of names that are randomly returned (not used at the moment)
-        static string GenerateName()
+
+
+        //Counters for certain events
+        static void Counters()
         {
-            string[] Names = { "Anthony", "Mikael", "Sean", "Nikita", "Arya", "Jakob", "Natan", "Joel", "Noa", "Melker", "Nelly", "Ebba", "Wera", "Christin", "Astrid", "Ylva" };
-            return Names[rndm.Next(Names.Length)];
+            Console.SetCursorPosition(0, cityHeight + 1);
+            Console.WriteLine($"Antal rånade medborgare: {medborgareRobbed}");
+            Console.Write(new string(' ', Console.WindowWidth));
+
+            Console.SetCursorPosition(0, cityHeight + 2);
+            Console.WriteLine($"Antal gripna tjuvar: {tjuvCaught}");
+            Console.Write(new string(' ', Console.WindowWidth));
         }
-        */
+
+
+        // Checks if people run into each other and executes CollisionOccurs if they do
+        static void CheckCollisions(List<Person> people)
+        {
+            for (int i = 0; i < people.Count; i++)
+            {
+                for (int j = i + 1; j < people.Count; j++)
+                {
+                    if (people[i].X == people[j].X && people[i].Y == people[j].Y)
+                    {
+                        CollisionOccurs(people[i], people[j]);
+                    }
+                }
+            }
+        }
+
+
+        // Switch for what happens depending on which types of person run into each other
+        static void CollisionOccurs(Person person1, Person person2)
+        {
+            switch (person1, person2)
+            {
+                case (Tjuv tjuv, Medborgare medborgare):
+                    Steal(tjuv, medborgare);
+                    break;
+
+                case (Medborgare medborgare, Tjuv tjuv):
+                    Steal(tjuv, medborgare);
+                    break;
+
+                case (Polis polis, Tjuv tjuv):
+                    Confiscate(polis, tjuv);
+                    break;
+
+                case (Tjuv tjuv, Polis polis):
+                    Confiscate(polis, tjuv);
+                    break;
+            }
+        }
+
+
+        /* When a Tjuv collides with a Medborgare, 
+         * the Tjuv picks a random Sak from Tillhörigheter and transfer it to their Stöldgods */
+        static void Steal(Tjuv tjuv, Medborgare medborgare)
+        {
+            if (medborgare.Saker.Any())
+            {
+                int randomIndex = rndm.Next(medborgare.Saker.Count);
+                Sak stolenSak = medborgare.Saker[randomIndex];
+
+                medborgare.Saker.RemoveAt(randomIndex);
+                tjuv.Saker.Add(stolenSak);
+
+                Console.WriteLine($"En tjuv stal {stolenSak.Name} från en medborgare!");
+                medborgareRobbed += 1;
+                Counters();
+
+                Thread.Sleep(2000);
+            }
+        }
+
+
+        /* When a Polis collides with a Tjuv,
+         * the Polis transfers everything from Stöldgods to their Beslagtaget */
+        static void Confiscate(Polis polis, Tjuv tjuv)
+        {
+            if (tjuv.Saker.Any())
+            {
+                var stolenItemsNames = tjuv.Saker.Select(sak => sak.Name).ToList();
+                string stolenItemsString = string.Join(", ", stolenItemsNames);
+
+                polis.Saker.AddRange(tjuv.Saker);
+                tjuv.Saker.Clear();
+
+                Console.WriteLine($"En polis fångade en tjuv och beslagtog {stolenItemsString}!");
+                tjuvCaught += 1;
+                Counters();
+
+                Thread.Sleep(2500);
+            }
+        }
     }
 }
+
+
+/*
+static string GenerateName()
+{
+    string[] Names = { "Nelly", "Ebba", "Wera", "Christin", "Astrid", "Ylva", "Anthony", "Mikael", "Sean", "Nikita", "Arya", "Jakob", "Natan", "Joel", "Noa", "Melker" };
+    return Names[rndm.Next(Names.Length)];
+}*/

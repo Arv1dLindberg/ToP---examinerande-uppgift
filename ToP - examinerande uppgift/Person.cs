@@ -8,21 +8,19 @@ namespace ToP___examinerande_uppgift
 {
     internal class Person
     {
-        public int X { get; set; } // X coordinate
-        public int Y { get; set; } // Y coordinate
-        public int Xdirection { get; set; } // Direction along the X-axis
-        public int Ydirection { get; set; } // Direction along the Y-axis
-        public string Name { get; set; }
-        public List<Sak> Saker { get; set; } = new List<Sak>(); // Stores Sak instances in a list
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Xdirection { get; set; }
+        public int Ydirection { get; set; }
+        public List<Sak> Saker { get; set; } = new List<Sak>();
 
-        public char Symbol => GetSymbol(); // Symbol representing people
-        protected virtual char GetSymbol() => ' '; // Default Symbol
-        
-        public virtual string InventoryName => " "; // Default InventoryName
+        public char Symbol => GetSymbol();
+        protected virtual char GetSymbol() => ' ';
+        public virtual string InventoryName => " ";
 
     }
 
-    // Adds a Sak along with a constructor
+    // Represents items people have in their inventory
     internal class Sak
     {
         public string Name { get; set; }
@@ -33,22 +31,23 @@ namespace ToP___examinerande_uppgift
         }
     }
 
+
     // Inheritances of Person
-    class Thief : Person 
+    class Tjuv : Person 
     {
-        protected override char GetSymbol() => 'T'; // Overrides Default Symbol
-        public override string InventoryName => "Stöldgods"; // Overrides default InventoryName
+        protected override char GetSymbol() => 'T';
+        public override string InventoryName => "Stöldgods";
     }
 
-    class Police : Person
+    class Polis : Person
     {
-        protected override char GetSymbol() => 'P'; // Overrides Default Symbol
-        public override string InventoryName => "Beslagtaget"; // Overrides default InventoryName
+        protected override char GetSymbol() => 'P';
+        public override string InventoryName => "Beslagtaget";
     }
 
-    class Citizen : Person
+    class Medborgare : Person
     {
-        protected override char GetSymbol() => 'M'; // Overrides Default Symbol
-        public override string InventoryName => "Tillhörigheter"; //Overrides default InventoryName
+        protected override char GetSymbol() => 'M';
+        public override string InventoryName => "Tillhörigheter";
     }
 }
