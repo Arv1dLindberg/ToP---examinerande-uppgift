@@ -47,6 +47,7 @@ namespace ToP___examinerande_uppgift
             }
         }
 
+        // Prints out the counters
         public static void printCounters()
         {
             Console.SetCursorPosition(0, CityManager.GetCityHeight() + 1);
